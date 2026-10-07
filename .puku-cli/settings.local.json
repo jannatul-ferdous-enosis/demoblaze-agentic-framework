@@ -1,0 +1,24 @@
+{
+  "permissions": {
+    "allow": [
+      "WebFetch(domain:www.demoblaze.com)",
+      "WebFetch(domain:demoblaze.com)",
+      "Bash(curl -s -L -I -A \"Mozilla/5.0\" https://demoblaze.com/)",
+      "Bash(curl -sL -o demoblaze-index.html https://www.demoblaze.com/)",
+      "Bash(curl -sL -o demoblaze-prod.html https://www.demoblaze.com/prod.html)",
+      "Bash(curl -sL -o demoblaze-cart.html https://www.demoblaze.com/cart.html)",
+      "Bash(ls -la *.html)",
+      "Bash(curl -sL -o bm.js \"https://www.demoblaze.com/bm.js\")",
+      "Bash(curl -sL --compressed -o demoblaze-prod.html https://www.demoblaze.com/prod.html)",
+      "Bash(curl -sL --compressed -o demoblaze-cart.html https://www.demoblaze.com/cart.html)",
+      "Bash(curl -sL -H \"Accept-Encoding: identity\" --compressed -o demoblaze-index.html https://www.demoblaze.com/)",
+      "Bash(curl -sL -H \"Accept-Encoding: identity\" --compressed -o demoblaze-prod.html https://www.demoblaze.com/prod.html)",
+      "Bash(curl -sL -H \"Accept-Encoding: identity\" --compressed -o index.js https://www.demoblaze.com/js/index.js)",
+      "Bash(curl -sL -H \"Accept-Encoding: identity\" --compressed -o prod.js https://www.demoblaze.com/js/prod.js)",
+      "Bash(curl -sL -H \"Accept-Encoding: identity\" --compressed -o cart.js https://www.demoblaze.com/js/cart.js)",
+      "Bash(ls -la *.js)",
+      "Bash(wc -l *.js)",
+      "Bash(npm install:*)"
+    ]
+  }
+}
