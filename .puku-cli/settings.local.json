@@ -23,7 +23,8 @@
       "Bash(npm run:*)",
       "Bash(cd:*)",
       "Bash(echo \"exit: $?\")",
-      "Bash(npx prettier:*)"
+      "Bash(npx prettier:*)",
+      "Bash(ls:*)"
     ]
   }
 }
