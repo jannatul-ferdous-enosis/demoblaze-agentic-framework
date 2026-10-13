@@ -116,6 +116,11 @@ all be hosts — the agent doesn't care.
 ```
 demoblaze-qa-agent/
 │
+├── inputs/                                # USER-AUTHORED INPUTS (committed)
+│   └── requirements/                       # one .md per feature
+│       ├── README.md                       # authoring + discovery contract
+│       └── login.md                        # example — feature slug "login"
+│
 ├── .claude/                              # Agent Skills convention
 │   ├── agents/
 │   │   └── qa-agent/
@@ -272,7 +277,56 @@ never edits a test case).
 
 ---
 
-## 7. Install
+## 7. Authoring requirements
+
+Requirement files live under `inputs/requirements/`. **You do not need
+to paste requirement content or file paths into chat** — the QA Agent
+auto-discovers the right file from your natural-language request.
+
+### Workflow
+
+```
+inputs/requirements/login.md        # you author this
+        ↓ (you say "Analyze login")
+QA Agent
+        ↓
+requirement-analysis skill
+        ↓ reads the file
+artifacts/requirements/login.md     # generated, with ## Source provenance
+```
+
+### Add a new requirement
+
+1. Create `inputs/requirements/<feature-slug>.md`. Filename **is** the
+   feature slug.
+2. Use the structure documented in `inputs/requirements/README.md`:
+   `# <Feature Name>` + `## Requirement` + `## Acceptance Criteria`.
+3. Commit it. The file is now part of the project's source of truth.
+4. Trigger the agent naturally: `"Analyze <feature>"`,
+   `"Write test cases for <feature>"`, or
+   `"Automate <feature>"`.
+
+### Resolution rules (summary)
+
+| You say                                  | The agent finds                                |
+| ---------------------------------------- | ---------------------------------------------- |
+| `"Analyze login"`                        | `inputs/requirements/login.md`                 |
+| `"Write test cases cart"`                | `inputs/requirements/cart.md`                  |
+| `"Automate signup"`                      | `inputs/requirements/signup.md`                |
+| `"process inputs/requirements/login.md"` | uses that file (explicit override)             |
+| `"Analyze ghost-feature"` (no match)     | lists available files, falls back to free-text |
+
+When multiple files match, the agent halts and asks you to pick.
+
+### Compatibility with existing flows
+
+Free-text descriptions in chat still work as a fallback. The host CLI
+auto-detects when a requirement file applies and passes its path via
+`--source=` to the skill.
+
+---
+
+## 8. Install
 
 Requirements: Node ≥ 20, npm ≥ 10.
 
@@ -293,7 +347,7 @@ cp .env.example .env
 
 ---
 
-## 8. Run the Playwright tests
+## 9. Run the Playwright tests
 
 ```bash
 # Run all tests (headless)
@@ -328,24 +382,25 @@ informally rate-limited.
 
 ---
 
-## 9. Use the agent from any host
+## 10. Use the agent from any host
 
 The agent contract is a markdown file. Any host can run it.
 
-### 9a. Reference Node host (bundled)
+### 10a. Reference Node host (bundled)
 
 ```bash
-# Deterministic intent router + plan
+# Deterministic intent router + plan (auto-resolves requirement files)
 npm run agent:pipeline -- "Analyze the login requirement"
 npm run agent:pipeline -- "Analyze login, write test cases, automate and run them"
 
-# Single skill
+# Single skill — the CLI prints the resolved --source path when applicable
 npm run agent:skill -- requirement-analysis login
+npm run agent:skill -- requirement-analysis login --source=inputs/requirements/login.md
 npm run agent:skill -- test-case-writing login
 npm run agent:skill -- test-automation-execution smoke
 ```
 
-### 9b. As Claude / Claude Code
+### 10b. As Claude / Claude Code
 
 1. Open the project in Claude Code.
 2. Load `.claude/agents/qa-agent/agent.md` as the system-level context.
@@ -353,13 +408,13 @@ npm run agent:skill -- test-automation-execution smoke
    matching `.claude/skills/<skill>/SKILL.md` files on demand.
 4. Skills produce artifacts in `artifacts/`.
 
-### 9c. As puku-cli / any other Claude-compatible agent
+### 10c. As puku-cli / any other Claude-compatible agent
 
 The contract is the same markdown. The host loads `agent.md`, loads
 each `SKILL.md` on demand, executes the skill's workflow against the
 artifacts, and validates the outputs.
 
-### 9d. As a custom host
+### 10d. As a custom host
 
 Write a host that:
 
@@ -373,7 +428,7 @@ That host can be in any language — the contracts are markdown.
 
 ---
 
-## 10. How to add a new skill
+## 11. How to add a new skill
 
 1. Create `.claude/skills/<skill-name>/SKILL.md` with YAML frontmatter
    (`name`, `description`) and all the standard sections (see any
@@ -392,7 +447,7 @@ That host can be in any language — the contracts are markdown.
 
 ---
 
-## 11. How to add a new agent (sub-agent evolution)
+## 12. How to add a new agent (sub-agent evolution)
 
 1. Create `.claude/agents/<agent-name>/agent.md` with YAML frontmatter
    (`name`, `description`) and its own routing table.
@@ -404,7 +459,7 @@ That host can be in any language — the contracts are markdown.
 
 ---
 
-## 12. How to add a new page
+## 13. How to add a new page
 
 1. Add a new file under `automation/pages/<PageName>.ts` extending
    nothing but using the page object pattern.
@@ -418,7 +473,7 @@ That host can be in any language — the contracts are markdown.
 
 ---
 
-## 13. How to add a new test
+## 14. How to add a new test
 
 1. Pick the test case ID from the corresponding
    `artifacts/test-cases/<feature>.json` file.
@@ -435,7 +490,7 @@ That host can be in any language — the contracts are markdown.
 
 ---
 
-## 14. Evolving into a Multi-Agent architecture
+## 15. Evolving into a Multi-Agent architecture
 
 The current implementation is intentionally a single decision-maker
 (the QA Agent) over seven skills. When the framework needs to scale:
@@ -464,7 +519,7 @@ survives a multi-agent migration.
 
 ---
 
-## 15. Coding standards
+## 16. Coding standards
 
 - TypeScript with `strict: true`.
 - ESM modules (`"module": "ESNext"`).
@@ -478,7 +533,7 @@ survives a multi-agent migration.
 
 ---
 
-## 16. Configuration reference
+## 17. Configuration reference
 
 `.env` (or `.env.example` template):
 
@@ -492,7 +547,7 @@ survives a multi-agent migration.
 
 ---
 
-## 17. Known limitations
+## 18. Known limitations
 
 - **Third-party rate limiting**: Demoblaze's auth APIs are informally rate
   limited. The config uses `workers: 1` to avoid triggering it.

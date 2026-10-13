@@ -18,7 +18,12 @@
       "Bash(curl -sL -H \"Accept-Encoding: identity\" --compressed -o cart.js https://www.demoblaze.com/js/cart.js)",
       "Bash(ls -la *.js)",
       "Bash(wc -l *.js)",
-      "Bash(npm install:*)"
+      "Bash(npm install:*)",
+      "Bash(npx tsc:*)",
+      "Bash(npm run:*)",
+      "Bash(cd:*)",
+      "Bash(echo \"exit: $?\")",
+      "Bash(npx prettier:*)"
     ]
   }
 }

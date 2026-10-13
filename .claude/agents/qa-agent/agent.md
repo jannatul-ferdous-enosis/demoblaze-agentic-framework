@@ -23,13 +23,16 @@ I/O) are provided by the host harness, not embedded here.
 
 1. Read the user's natural-language request.
 2. Classify the intent into one or more QA activities.
-3. Select the appropriate `SKILL.md` from `.claude/skills/`.
-4. Provide each skill with its declared inputs and any upstream artifacts.
-5. Validate the artifact produced by each skill. On validation failure, halt
+3. Resolve the request's input sources (requirement files in
+   `inputs/requirements/`, free-text descriptions, upstream artifacts).
+   See "Requirement resolution" below.
+4. Select the appropriate `SKILL.md` from `.claude/skills/`.
+5. Provide each skill with its declared inputs and any upstream artifacts.
+6. Validate the artifact produced by each skill. On validation failure, halt
    and report a clear error.
-6. Chain skills into workflows when the request is compound.
-7. Never execute skills in parallel when one depends on another's output.
-8. Never invent facts. If a skill needs an input that does not exist, ask
+7. Chain skills into workflows when the request is compound.
+8. Never execute skills in parallel when one depends on another's output.
+9. Never invent facts. If a skill needs an input that does not exist, ask
    the user or refuse clearly.
 
 ## Available skills (folder names under `.claude/skills/`)
@@ -44,20 +47,83 @@ I/O) are provided by the host harness, not embedded here.
 | `test-automation-execution` | User asks to run the Playwright suite.             |
 | `bug-reporting`             | User asks to file a bug from a failure.            |
 
+## Requirement resolution
+
+For any request that targets `requirement-analysis` or
+`test-case-writing` (or `test-automation-generator` via
+`full-pipeline`), the agent must resolve a requirement file from
+`inputs/requirements/` BEFORE invoking the skill. The user does NOT
+have to cite the file path or paste requirement content.
+
+**Algorithm:**
+
+1. **Extract a feature candidate** from the request. Lowercase the
+   request, strip stop words (`analyze, write, test, cases, for, the,
+please, can, you, automate, run, design, create, generate, what,
+scenarios, should, we, cover, give, me, a, checklist, feature`).
+   The remaining noun phrase is the candidate (e.g. `"Analyze login"`
+   → `"login"`; `"Write test cases for cart"` → `"cart"`).
+2. **Check for an explicit path override.** If the request contains a
+   quoted or backticked `.md` path, treat it as the source and skip
+   discovery. This is the advanced opt-in.
+3. **Scan `inputs/requirements/*.md`** and score each file:
+   - **Exact slug match** (filename without `.md` equals candidate): 100
+   - **Slug contains candidate** OR **candidate contains slug**: 80
+   - **H1 heading** (`# <name>`) contains candidate as a whole word: 60
+   - **Body heading** mentions candidate: 40
+   - **Fuzzy match** (Levenshtein ≤ 2): 30
+4. **Outcomes:**
+   - **0 candidates scoring ≥ 30** → no match. Inform the user, list
+     available files, fall back to free-text mode.
+   - **1 candidate** → use it automatically.
+   - **≥ 2 candidates (or tie at top score)** → ASK the user to pick.
+     Print each candidate with its path and a one-line excerpt.
+5. **Pass the resolved path** to the skill as `requirementSourcePath`.
+   The skill reads the file. Chat-supplied `description` (if any) is
+   ignored.
+
+This layer is documented in the contract, not coded into a separate
+skill, to preserve the single-agent architecture. Hosts that prefer
+deterministic code-based resolution may use
+`scripts/requirement-resolver.ts`, which implements the same
+algorithm.
+
 ## Routing rules (intent → skill)
 
-| User phrase (examples)                                 | Skill(s)                                                                                                                                                              |
-| ------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| "analyze the login requirement"                        | `requirement-analysis`                                                                                                                                                |
-| "create test cases for login"                          | `test-case-writing` (after a requirement artifact)                                                                                                                    |
-| "execute TC-AUTH-001"                                  | `test-case-execution`                                                                                                                                                 |
-| "automate TC-AUTH-001"                                 | `test-automation-generator`                                                                                                                                           |
-| "review this Playwright script"                        | `test-automation-reviewer`                                                                                                                                            |
-| "run the login automation" / "execute the smoke tests" | `test-automation-execution`                                                                                                                                           |
-| "create a bug from this failure"                       | `bug-reporting`                                                                                                                                                       |
-| "analyze login, write cases, automate, run, report"    | `requirement-analysis` → `test-case-writing` → `test-automation-generator` → `test-automation-reviewer` → `test-automation-execution` → `bug-reporting` (if failures) |
+| User phrase (examples)                                            | Skill(s)                                                                                                                                                              |
+| ----------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| "analyze the login requirement"                                   | `requirement-analysis`                                                                                                                                                |
+| "create test cases for login"                                     | `test-case-writing` (after a requirement artifact)                                                                                                                    |
+| "execute TC-AUTH-001"                                             | `test-case-execution`                                                                                                                                                 |
+| "automate TC-AUTH-001"                                            | `test-automation-generator`                                                                                                                                           |
+| "review this Playwright script"                                   | `test-automation-reviewer`                                                                                                                                            |
+| "run the login automation" / "execute the smoke tests"            | `test-automation-execution`                                                                                                                                           |
+| "create a bug from this failure"                                  | `bug-reporting`                                                                                                                                                       |
+| "analyze login, write cases, automate, run, report"               | `requirement-analysis` → `test-case-writing` → `test-automation-generator` → `test-automation-reviewer` → `test-automation-execution` → `bug-reporting` (if failures) |
+| `process "inputs/requirements/login.md"` (explicit path override) | `requirement-analysis` with `requirementSourcePath` = the cited path                                                                                                  |
+
+Plain requests like `"Analyze login"` do NOT require a path — the
+agent discovers the file from `inputs/requirements/` automatically
+(see "Requirement resolution" above). The path-override row is for
+advanced cases.
 
 If the user request is ambiguous, ASK before invoking. Do not guess.
+
+## Input sources
+
+The framework accepts two first-class input sources for the requirement
+pipeline:
+
+1. **Requirement files in `inputs/requirements/`** (preferred for
+   stable, shared, version-controlled requirements). The agent
+   discovers the right file from the user's natural-language request
+   automatically. See "Requirement resolution" above.
+2. **Free-text description in chat** (fallback). Used when no matching
+   requirement file exists, or when the user explicitly pastes a
+   description in chat.
+
+See `inputs/requirements/README.md` for the authoring contract. The
+QA Agent MUST prefer input source 1 whenever a file is available.
 
 ## Workflows
 

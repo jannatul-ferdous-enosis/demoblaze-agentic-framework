@@ -8,6 +8,8 @@
  *   tsx scripts/run-agent.ts "Analyze login, write test cases, automate, run, and report"
  *
  * What this CLI does:
+ *  - Runs requirement resolution (auto-discovers requirement files
+ *    in `inputs/requirements/` from the user's natural-language request)
  *  - Loads the intent router
  *  - Classifies the request into a workflow + skill list
  *  - Prints the planned workflow
@@ -22,6 +24,12 @@
  */
 
 import { route, type RouteDecision } from '../.claude/agents/qa-agent/intent-router';
+import {
+  resolveRequirement,
+  requestTriggersRequirementResolution,
+  extractExplicitPath,
+  type ResolvedRequirement,
+} from './requirement-resolver';
 import * as path from 'node:path';
 import * as fs from 'node:fs';
 
@@ -45,6 +53,53 @@ console.info(`Skills:    ${decision.skills.join(' → ')}`);
 console.info(`Rationale: ${decision.rationale}`);
 console.info('=================================================');
 
+// Pre-step: requirement resolution. Runs when the request targets the
+// requirement pipeline OR when the user explicitly cited a .md path.
+let resolution: ResolvedRequirement | null = null;
+if (requestTriggersRequirementResolution(request) || extractExplicitPath(request) !== null) {
+  resolution = resolveRequirement(request, REPO_ROOT);
+  console.info('');
+  console.info('▶ Requirement resolution');
+  switch (resolution.kind) {
+    case 'path':
+      console.info(`  Using explicit path: ${resolution.path}`);
+      break;
+    case 'auto':
+      console.info(`  Auto-discovered: ${resolution.path}`);
+      console.info(
+        `  → Pass via: npm run agent:skill -- requirement-analysis <feature> --source=${resolution.path}`,
+      );
+      break;
+    case 'ambiguous':
+      console.info(`  Multiple files match. Please pick one:`);
+      for (const c of resolution.candidates) {
+        console.info(`    - ${c.path}  (score ${c.score})`);
+        if (c.heading) console.info(`        H1: ${c.heading}`);
+        if (c.excerpt) console.info(`        "${c.excerpt}"`);
+      }
+      console.info('  Re-run with an explicit path, e.g.:');
+      console.info(
+        '    npm run agent:pipeline -- "analyze login from inputs/requirements/login.md"',
+      );
+      // Halt before skill execution to force the user to disambiguate.
+      console.info('=================================================');
+      process.exit(4);
+      break; // unreachable; satisfies no-fallthrough
+    case 'none':
+      console.info(`  No matching requirement file.`);
+      if (resolution.available.length > 0) {
+        console.info(`  Available files: ${resolution.available.join(', ')}`);
+        console.info(`  Falling back to free-text mode.`);
+      } else {
+        console.info(
+          `  inputs/requirements/ is empty. Author a requirement file or paste a description.`,
+        );
+        console.info(`  Falling back to free-text mode.`);
+      }
+      break;
+  }
+}
+
 // Per-skill deterministic actions
 for (const skill of decision.skills) {
   const skillMd = path.join(REPO_ROOT, '.claude', 'skills', skill, 'SKILL.md');
@@ -56,9 +111,19 @@ for (const skill of decision.skills) {
     console.info(`  No SKILL.md at ${skillMd}`);
   }
   switch (skill) {
-    case 'requirement-analysis':
-      console.info(`  → Run: npm run agent:skill -- requirement-analysis <feature-slug>`);
+    case 'requirement-analysis': {
+      // If a file was resolved, suggest the --source invocation. The
+      // bare `<feature-slug>` invocation is still printed for fallback.
+      if (resolution && (resolution.kind === 'auto' || resolution.kind === 'path')) {
+        const slug = path.basename(resolution.path, '.md');
+        console.info(
+          `  → Run: npm run agent:skill -- requirement-analysis ${slug} --source=${resolution.path}`,
+        );
+      } else {
+        console.info(`  → Run: npm run agent:skill -- requirement-analysis <feature-slug>`);
+      }
       break;
+    }
     case 'test-case-writing':
       console.info(`  → Run: npm run agent:skill -- test-case-writing <feature-slug>`);
       break;

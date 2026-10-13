@@ -18,11 +18,16 @@ a structured requirement analysis that downstream skills can consume.
 
 ## Inputs
 
-| Name                     | Required | Description                                          |
-| ------------------------ | -------- | ---------------------------------------------------- |
-| `feature`                | yes      | A short slug, e.g. `login`, `signup`, `place-order`. |
-| `description`            | yes      | Raw feature text (free form).                        |
-| `knownSelectableTargets` | no       | Pre-discovered UI surfaces (optional).               |
+| Name                     | Required | Description                                                                                                                                                                    |
+| ------------------------ | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `feature`                | yes      | A short slug, e.g. `login`, `signup`, `place-order`.                                                                                                                           |
+| `description`            | no       | Raw feature text (free form). Not required when `requirementSourcePath` is provided.                                                                                           |
+| `requirementSourcePath`  | no       | Path (absolute or repo-relative) to a user-authored `.md` requirement under `inputs/requirements/`. The skill reads this file. Overrides `description` when both are provided. |
+| `knownSelectableTargets` | no       | Pre-discovered UI surfaces (optional).                                                                                                                                         |
+
+> **Source-of-truth rule.** When `requirementSourcePath` is provided, the
+> file content is authoritative. The `description` field (if also provided)
+> is ignored. If neither is provided, ASK the user (see Failure handling).
 
 ## Required context
 
@@ -30,6 +35,33 @@ a structured requirement analysis that downstream skills can consume.
 - The selector cheatsheet: `.claude/agents/qa-agent/selector-cheatsheet.md`
 - Existing requirement artifacts in `artifacts/requirements/` (if any, to
   avoid duplication)
+- The user-authored requirement file at `requirementSourcePath` (if any)
+
+## Reading a requirement source file
+
+When `requirementSourcePath` is provided, the skill must perform the
+following BEFORE workflow step 1:
+
+1. **Resolve the path** to an absolute path (if repo-relative, anchor on
+   the repo root).
+2. **Read the file** with the host's file-read tool.
+3. **Use the full file content** as the analysis source. It is
+   semantically equivalent to the `description` field.
+4. **Extract the H1 heading** (`# <Feature Name>` or `# <name>`) if
+   present. Cross-check it against the `feature` slug. If they disagree
+   (e.g. H1 says "Login Feature" but slug is `login`), prefer the slug —
+   it is the artifact filename — and add an entry to **Open Questions**
+   about the mismatch.
+5. **Identify structural sections** in the file: `## Requirement`,
+   `## Acceptance Criteria`, `## Notes` (optional). Use them as the
+   starting point for the workflow below.
+6. **Do not silently fall back** to a chat-supplied `description` if
+   the file is missing or empty. Halt with a clear error (see Failure
+   handling).
+
+This mirrors the existing pattern in `test-case-writing` where the
+skill receives a `requirementArtifactPath` and reads it. The same
+"path-in, file-by-skill" contract keeps skills self-contained.
 
 ## Workflow
 
@@ -85,12 +117,23 @@ sections (in order):
 - Contains the sections listed above.
 - Has at least 3 functional requirements and 2 acceptance criteria.
 - Has at least 2 negative scenarios.
+- **Provenance (when source file was used):** if `requirementSourcePath`
+  was provided, the artifact MUST include a `## Source` section at the
+  end with two bullets:
+  - `- Path: <requirementSourcePath>`
+  - `- First heading: <first H1 of the source file, or "(no heading)">`
 
 ## Failure handling
 
 - If the description is too short to analyze, ASK the user for more
   details instead of guessing.
 - If the target is not Demoblaze, state the assumption and stop.
+- If `requirementSourcePath` is provided but the file does not exist
+  or is empty, halt and report a clear error pointing at the path. Do
+  not silently fall back to chat text.
+- If neither `description` nor `requirementSourcePath` is provided,
+  ASK the user for a source (free-text description OR a path under
+  `inputs/requirements/`).
 
 ## Examples
 
