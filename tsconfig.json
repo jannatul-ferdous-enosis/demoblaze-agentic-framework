@@ -13,6 +13,6 @@
     "isolatedModules": true,
     "verbatimModuleSyntax": false
   },
-  "include": ["scripts/**/*", ".claude/**/*"],
+  "include": ["scripts/**/*", ".agents/**/*"],
   "exclude": ["node_modules", "automation", "reports", "artifacts"]
 }

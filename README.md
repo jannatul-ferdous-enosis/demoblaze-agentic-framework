@@ -7,7 +7,7 @@ test automation generation → test automation review → test automation execut
 → bug reporting.
 
 The framework is organized around the **Agent Skills** convention
-(`.claude/agents/<name>/agent.md` + `.claude/skills/<name>/SKILL.md`).
+(`.agents/agents/<name>/agent.md` + `.agents/skills/<name>/SKILL.md`).
 The agent contract is **harness-agnostic**: any agent host that can read
 markdown and invoke tools (Claude Code, puku-cli, Cursor, Codex, a custom
 runner, etc.) can execute it. The included `scripts/run-agent.ts` is one
@@ -46,14 +46,14 @@ full pipeline.
 └──────────┬───────────┘
            ▼
 ┌──────────────────────────────────────────────────────────────────────────┐
-│  QA AGENT  (.claude/agents/qa-agent/agent.md)                             │
+│  QA AGENT  (.agents/agents/qa-agent/agent.md)                             │
 │  - Reads intent, picks workflow, picks skills, validates artifacts.       │
 │  - Harness-agnostic: any agent host can run it.                          │
 └──────┬───────────────────────────────────────────────────────────────────┘
        │  loads
        ▼
 ┌──────────────────────────────────────────────────────────────────────────┐
-│  SKILLS  (.claude/skills/*/SKILL.md) — pure markdown contracts           │
+│  SKILLS  (.agents/skills/*/SKILL.md) — pure markdown contracts           │
 │   requirement-analysis → test-case-writing → test-automation-generator →  │
 │   test-automation-reviewer → test-automation-execution → bug-reporting    │
 └──────┬───────────────────────────────────────────────────────────────────┘
@@ -79,8 +79,8 @@ full pipeline.
 
 | Layer        | Lives in                 | Responsibility                                             |
 | ------------ | ------------------------ | ---------------------------------------------------------- |
-| **Agent**    | `.claude/agents/<name>/` | Reasoning, intent, skill selection, workflow orchestration |
-| **Skill**    | `.claude/skills/<name>/` | Domain knowledge for ONE QA activity (input → output)      |
+| **Agent**    | `.agents/agents/<name>/` | Reasoning, intent, skill selection, workflow orchestration |
+| **Skill**    | `.agents/skills/<name>/` | Domain knowledge for ONE QA activity (input → output)      |
 | **Tool**     | `automation/`            | Side-effecting code: Playwright, fetch, file writers       |
 | **Artifact** | `artifacts/**`           | Structured output of a skill; contract between skills      |
 | **Host**     | `scripts/`               | Optional CLI host that runs the agent deterministically    |
@@ -90,7 +90,7 @@ Tools do not embed QA policy. The agent does not bypass skill contracts.
 
 ### Harness-agnostic design
 
-The agent contract in `.claude/agents/qa-agent/agent.md`:
+The agent contract in `.agents/agents/qa-agent/agent.md`:
 
 - Does **not** reference any specific harness or host tool API.
 - Does **not** assume a specific model or `Skill` invocation primitive.
@@ -121,7 +121,7 @@ demoblaze-qa-agent/
 │       ├── README.md                       # authoring + discovery contract
 │       └── login.md                        # example — feature slug "login"
 │
-├── .claude/                              # Agent Skills convention
+├── .agents/                              # Agent Skills convention
 │   ├── agents/
 │   │   └── qa-agent/
 │   │       ├── agent.md                  # identity, routing, hard rules
@@ -202,8 +202,8 @@ demoblaze-qa-agent/
 ## 4. How the QA Agent works
 
 1. **Receive request** — natural language, e.g. "Test the login functionality".
-2. **Classify intent** — see `.claude/agents/qa-agent/agent.md` and the routing
-   rules in `.claude/agents/qa-agent/intent-router.ts`.
+2. **Classify intent** — see `.agents/agents/qa-agent/agent.md` and the routing
+   rules in `.agents/agents/qa-agent/intent-router.ts`.
 3. **Pick a workflow** — one of `analyze-only`, `design-only`,
    `automate-and-execute`, `review-and-report`, `full-pipeline`.
 4. **Invoke skills in order**, providing each with the upstream artifact.
@@ -403,9 +403,9 @@ npm run agent:skill -- test-automation-execution smoke
 ### 10b. As Claude / Claude Code
 
 1. Open the project in Claude Code.
-2. Load `.claude/agents/qa-agent/agent.md` as the system-level context.
+2. Load `.agents/agents/qa-agent/agent.md` as the system-level context.
 3. On a user request, the host follows the routing rules and reads the
-   matching `.claude/skills/<skill>/SKILL.md` files on demand.
+   matching `.agents/skills/<skill>/SKILL.md` files on demand.
 4. Skills produce artifacts in `artifacts/`.
 
 ### 10c. As puku-cli / any other Claude-compatible agent
@@ -430,7 +430,7 @@ That host can be in any language — the contracts are markdown.
 
 ## 11. How to add a new skill
 
-1. Create `.claude/skills/<skill-name>/SKILL.md` with YAML frontmatter
+1. Create `.agents/skills/<skill-name>/SKILL.md` with YAML frontmatter
    (`name`, `description`) and all the standard sections (see any
    existing `SKILL.md` for the template).
 2. The skill must NOT reference page objects, fixtures, or application-
@@ -439,20 +439,20 @@ That host can be in any language — the contracts are markdown.
    `scripts/artifact-writers.ts` and a type to
    `automation/types/domain.ts`.
 4. Add the skill to the routing table in
-   `.claude/agents/qa-agent/agent.md`.
+   `.agents/agents/qa-agent/agent.md`.
 5. Add the skill to the keyword list in
-   `.claude/agents/qa-agent/intent-router.ts`.
+   `.agents/agents/qa-agent/intent-router.ts`.
 6. If the skill is part of a multi-step workflow, add a workflow spec
-   under `.claude/agents/qa-agent/workflows/`.
+   under `.agents/agents/qa-agent/workflows/`.
 
 ---
 
 ## 12. How to add a new agent (sub-agent evolution)
 
-1. Create `.claude/agents/<agent-name>/agent.md` with YAML frontmatter
+1. Create `.agents/agents/<agent-name>/agent.md` with YAML frontmatter
    (`name`, `description`) and its own routing table.
-2. The sub-agent owns one or more skills from `.claude/skills/`.
-3. The orchestrator (`.claude/agents/orchestrator/agent.md` in future)
+2. The sub-agent owns one or more skills from `.agents/skills/`.
+3. The orchestrator (`.agents/agents/orchestrator/agent.md` in future)
    routes to sub-agents based on user intent.
 4. The artifact contract is unchanged — sub-agents read/write the same
    `artifacts/` paths.
@@ -463,7 +463,7 @@ That host can be in any language — the contracts are markdown.
 
 1. Add a new file under `automation/pages/<PageName>.ts` extending
    nothing but using the page object pattern.
-2. Use selectors from `.claude/agents/qa-agent/selector-cheatsheet.md`
+2. Use selectors from `.agents/agents/qa-agent/selector-cheatsheet.md`
    when available. If a new selector is needed, verify it against the
    live DOM and add it to the cheatsheet.
 3. The page object should expose high-level actions (e.g. `login(user)`),
@@ -496,7 +496,7 @@ The current implementation is intentionally a single decision-maker
 (the QA Agent) over seven skills. When the framework needs to scale:
 
 1. **Add an Orchestrator Agent** at
-   `.claude/agents/orchestrator/agent.md` that holds the routing logic
+   `.agents/agents/orchestrator/agent.md` that holds the routing logic
    in the current `qa-agent/agent.md`. It does not own any QA work; it
    just picks sub-agents.
 2. **Promote each skill cluster to a sub-agent**:
@@ -509,7 +509,7 @@ The current implementation is intentionally a single decision-maker
 3. **Skills stay as-is.** They are pure markdown contracts; agents
    invoke them through the same artifact I/O the current host uses.
 4. **Workflows move** from the current
-   `.claude/agents/qa-agent/workflows/*.md` to the Orchestrator Agent's
+   `.agents/agents/qa-agent/workflows/*.md` to the Orchestrator Agent's
    decision logic.
 
 The key design property that makes this migration cheap: **the boundary

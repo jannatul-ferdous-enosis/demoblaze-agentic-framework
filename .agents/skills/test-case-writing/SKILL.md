@@ -25,7 +25,7 @@ acceptance criteria, or raw feature descriptions.
 
 ## Required context
 
-- The selector cheatsheet: `.claude/agents/qa-agent/selector-cheatsheet.md`
+- The selector cheatsheet: `.agents/agents/qa-agent/selector-cheatsheet.md`
 - The verified alert() messages and dialog semantics in the cheatsheet
 - The requirement artifact, if any
 

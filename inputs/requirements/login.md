@@ -22,7 +22,7 @@ On failure, the system must surface a clear, user-visible error.
 ## Notes
 
 - The login modal is a Bootstrap modal with the `id="logInModal"`
-  attribute. See `.claude/agents/qa-agent/selector-cheatsheet.md` for
+  attribute. See `.agents/agents/qa-agent/selector-cheatsheet.md` for
   verified selectors.
 - Logout must return the user to the unauthenticated state.
 - The "Welcome <username>" indicator in the navbar is the source of

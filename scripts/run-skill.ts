@@ -5,7 +5,7 @@
  * Usage:
  *   tsx scripts/run-skill.ts <skill> <input-file-or-feature> [--source=<path>]
  *
- * Skills available (loaded from .claude/skills/<skill>/SKILL.md):
+ * Skills available (loaded from .agents/skills/<skill>/SKILL.md):
  *   requirement-analysis, test-case-writing, test-case-execution,
  *   test-automation-generator, test-automation-reviewer,
  *   test-automation-execution, bug-reporting
@@ -36,7 +36,7 @@ const REPO_ROOT = path.resolve(__dirname, '..');
 function printUsage(): void {
   console.info(`run-skill <skill> <input> [--source=<path>]
 
-Skills (loaded from .claude/skills/<skill>/SKILL.md):
+Skills (loaded from .agents/skills/<skill>/SKILL.md):
   requirement-analysis        <feature-slug>     [--source=inputs/requirements/<slug>.md]
   test-case-writing           <feature-slug>
   test-case-execution         <test-case-id>
@@ -77,7 +77,7 @@ if (!skill || !input) {
   process.exit(1);
 }
 
-const SKILL_DIR = path.join(REPO_ROOT, '.claude', 'skills', skill, 'SKILL.md');
+const SKILL_DIR = path.join(REPO_ROOT, '.agents', 'skills', skill, 'SKILL.md');
 
 let skillMd: string;
 try {

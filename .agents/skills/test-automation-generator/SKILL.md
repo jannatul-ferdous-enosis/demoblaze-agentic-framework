@@ -24,7 +24,7 @@ Generate a Playwright TypeScript spec file from an approved test case.
 
 ## Required context
 
-- The selector cheatsheet: `.claude/agents/qa-agent/selector-cheatsheet.md`
+- The selector cheatsheet: `.agents/agents/qa-agent/selector-cheatsheet.md`
 - Existing page objects in `automation/pages/` and components in
   `automation/components/`.
 - Existing fixtures in `automation/fixtures/`.

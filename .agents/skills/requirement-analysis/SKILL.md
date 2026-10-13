@@ -32,7 +32,7 @@ a structured requirement analysis that downstream skills can consume.
 ## Required context
 
 - The target application: `https://www.demoblaze.com/`
-- The selector cheatsheet: `.claude/agents/qa-agent/selector-cheatsheet.md`
+- The selector cheatsheet: `.agents/agents/qa-agent/selector-cheatsheet.md`
 - Existing requirement artifacts in `artifacts/requirements/` (if any, to
   avoid duplication)
 - The user-authored requirement file at `requirementSourcePath` (if any)

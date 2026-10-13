@@ -17,13 +17,13 @@
  *    commands), executes it. For LLM-backed skills, it prints the
  *    SKILL.md so the human can invoke the agent host.
  *
- * Skills are loaded from `.claude/skills/<skill>/SKILL.md` (Agent Skills
+ * Skills are loaded from `.agents/skills/<skill>/SKILL.md` (Agent Skills
  * convention). The agent contract lives at
- * `.claude/agents/qa-agent/agent.md` and is harness-agnostic — this CLI
+ * `.agents/agents/qa-agent/agent.md` and is harness-agnostic — this CLI
  * is just one possible host.
  */
 
-import { route, type RouteDecision } from '../.claude/agents/qa-agent/intent-router';
+import { route, type RouteDecision } from '../.agents/agents/qa-agent/intent-router';
 import {
   resolveRequirement,
   requestTriggersRequirementResolution,
@@ -102,7 +102,7 @@ if (requestTriggersRequirementResolution(request) || extractExplicitPath(request
 
 // Per-skill deterministic actions
 for (const skill of decision.skills) {
-  const skillMd = path.join(REPO_ROOT, '.claude', 'skills', skill, 'SKILL.md');
+  const skillMd = path.join(REPO_ROOT, '.agents', 'skills', skill, 'SKILL.md');
   console.info(`\n▶ Skill: ${skill}`);
   try {
     const size = fs.statSync(skillMd).size;

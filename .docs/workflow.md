@@ -16,12 +16,12 @@ flowchart TB
     User([User request<br/>natural language])
 
     subgraph Host["Host harness (Claude Code, puku-cli, or scripts/run-agent.ts)"]
-        Agent["QA Agent<br/>(.claude/agents/qa-agent/agent.md)"]
+        Agent["QA Agent<br/>(.agents/agents/qa-agent/agent.md)"]
         Router["Intent router<br/>(intent-router.ts)"]
         Resolver["Requirement resolver<br/>(requirement-resolver.ts)"]
     end
 
-    subgraph Skills["Skills (.claude/skills/&lt;name&gt;/SKILL.md) — loaded on demand"]
+    subgraph Skills["Skills (.agents/skills/&lt;name&gt;/SKILL.md) — loaded on demand"]
         S1["requirement-analysis"]
         S2["test-case-writing"]
         S3["test-case-execution"]
@@ -89,7 +89,7 @@ sequenceDiagram
     end
 
     loop for each skill in order
-        Agent->>Skill: load .claude/skills/<skill>/SKILL.md
+        Agent->>Skill: load .agents/skills/<skill>/SKILL.md
         Skill->>FS: read upstream artifact
         Skill->>FS: write new artifact
         Agent->>FS: validate artifact (path + shape)
@@ -287,14 +287,14 @@ stateDiagram-v2
 
 ```mermaid
 flowchart TB
-    subgraph L1["Layer 1 — Reasoning<br/>.claude/agents/qa-agent/"]
+    subgraph L1["Layer 1 — Reasoning<br/>.agents/agents/qa-agent/"]
         L1a[agent.md<br/>identity + routing + hard rules]
         L1b[workflows/*.md<br/>skill chains]
         L1c[intent-router.ts<br/>deterministic classifier]
         L1d[selector-cheatsheet.md<br/>verified Demoblaze selectors]
     end
 
-    subgraph L2["Layer 2 — Domain knowledge<br/>.claude/skills/"]
+    subgraph L2["Layer 2 — Domain knowledge<br/>.agents/skills/"]
         L2a[requirement-analysis]
         L2b[test-case-writing]
         L2c[test-case-execution]
@@ -367,11 +367,11 @@ mindmap
 
 ```mermaid
 flowchart TD
-    Start([Need new QA activity X]) --> S1[1. Author .claude/skills/&lt;X&gt;/SKILL.md<br/>with standard template]
+    Start([Need new QA activity X]) --> S1[1. Author .agents/skills/&lt;X&gt;/SKILL.md<br/>with standard template]
     S1 --> S2[2. Define new artifact shape if needed<br/>+ add writer in scripts/artifact-writers.ts<br/>+ type in automation/types/domain.ts]
     S2 --> S3[3. Register in agent.md routing table]
     S3 --> S4[4. Add keywords to intent-router.ts]
-    S4 --> S5[5. If multi-step, add workflow spec<br/>under .claude/agents/qa-agent/workflows/]
+    S4 --> S5[5. If multi-step, add workflow spec<br/>under .agents/agents/qa-agent/workflows/]
     S5 --> Done([Skill is live — any host<br/>Claude Code / puku-cli /<br/>scripts/run-agent.ts can use it])
 ```
 
@@ -379,8 +379,8 @@ flowchart TD
 
 **See also:**
 
-- `.claude/agents/qa-agent/agent.md` — agent contract
-- `.claude/skills/<name>/SKILL.md` — per-skill markdown contracts
-- `.claude/agents/qa-agent/workflows/*.md` — workflow specs
+- `.agents/agents/qa-agent/agent.md` — agent contract
+- `.agents/skills/<name>/SKILL.md` — per-skill markdown contracts
+- `.agents/agents/qa-agent/workflows/*.md` — workflow specs
 - `scripts/run-agent.ts` — reference Node host
 - `README.md` — full architecture overview

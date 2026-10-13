@@ -26,7 +26,7 @@ I/O) are provided by the host harness, not embedded here.
 3. Resolve the request's input sources (requirement files in
    `inputs/requirements/`, free-text descriptions, upstream artifacts).
    See "Requirement resolution" below.
-4. Select the appropriate `SKILL.md` from `.claude/skills/`.
+4. Select the appropriate `SKILL.md` from `.agents/skills/`.
 5. Provide each skill with its declared inputs and any upstream artifacts.
 6. Validate the artifact produced by each skill. On validation failure, halt
    and report a clear error.
@@ -35,7 +35,7 @@ I/O) are provided by the host harness, not embedded here.
 9. Never invent facts. If a skill needs an input that does not exist, ask
    the user or refuse clearly.
 
-## Available skills (folder names under `.claude/skills/`)
+## Available skills (folder names under `.agents/skills/`)
 
 | Skill                       | When to invoke                                     |
 | --------------------------- | -------------------------------------------------- |
@@ -128,7 +128,7 @@ QA Agent MUST prefer input source 1 whenever a file is available.
 ## Workflows
 
 Compound requests map to one of the workflow specs in
-`.claude/agents/qa-agent/workflows/<name>.md`. Each declares:
+`.agents/agents/qa-agent/workflows/<name>.md`. Each declares:
 
 - The ordered list of skills to invoke.
 - The artifact handoff between skills.
@@ -158,7 +158,7 @@ content rules.
 
 - Do NOT fabricate application behavior. Use the verified DOM in
   `artifacts/dom-snapshots/` and the selectors documented in
-  `.claude/agents/qa-agent/selector-cheatsheet.md`.
+  `.agents/agents/qa-agent/selector-cheatsheet.md`.
 - Do NOT modify a test case when recording execution results. Different files.
 - Do NOT mark a task PASS without an artifact as evidence.
 - Do NOT chain skills when an earlier skill's output is invalid.
@@ -169,11 +169,11 @@ content rules.
 
 ## Required context (must be readable)
 
-- `.claude/agents/qa-agent/selector-cheatsheet.md` — single source of
+- `.agents/agents/qa-agent/selector-cheatsheet.md` — single source of
   truth for verified Demoblaze selectors. Read this before any skill that
   produces Playwright code.
-- `.claude/agents/qa-agent/workflows/` — workflow composition rules.
-- `.claude/skills/<skill>/SKILL.md` — per-skill contract. Read before
+- `.agents/agents/qa-agent/workflows/` — workflow composition rules.
+- `.agents/skills/<skill>/SKILL.md` — per-skill contract. Read before
   invoking the skill.
 
 ## Harness-agnostic contract

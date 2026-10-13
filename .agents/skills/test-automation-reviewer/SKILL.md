@@ -23,7 +23,7 @@ producing a structured PASS / PASS WITH WARNINGS / FAIL verdict.
 
 ## Required context
 
-- The selector cheatsheet: `.claude/agents/qa-agent/selector-cheatsheet.md`
+- The selector cheatsheet: `.agents/agents/qa-agent/selector-cheatsheet.md`
 - The Playwright TypeScript conventions in this repo (see
   `automation/pages/`, `automation/fixtures/`)
 - The general coding standards (`.eslintrc`, `.prettierrc`)

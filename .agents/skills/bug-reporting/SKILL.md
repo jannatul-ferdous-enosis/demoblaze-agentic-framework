@@ -24,7 +24,7 @@ Convert a failed execution into a professional, evidence-driven bug report.
 
 ## Required context
 
-- The selector cheatsheet: `.claude/agents/qa-agent/selector-cheatsheet.md`
+- The selector cheatsheet: `.agents/agents/qa-agent/selector-cheatsheet.md`
 - The originating test case (looked up via the failed test ID).
 
 ## Workflow

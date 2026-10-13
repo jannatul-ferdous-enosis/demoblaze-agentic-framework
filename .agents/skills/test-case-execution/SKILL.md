@@ -24,7 +24,7 @@ PASS / FAIL / BLOCKED with evidence.
 
 ## Required context
 
-- The selector cheatsheet: `.claude/agents/qa-agent/selector-cheatsheet.md`
+- The selector cheatsheet: `.agents/agents/qa-agent/selector-cheatsheet.md`
 - The verified dialog handler utility: `automation/utils/dialogHandler.ts`
 - A running Playwright browser (or any browser automation tool)
 - The application URL from `.env` (`DEMOBLAZE_BASE_URL`)
