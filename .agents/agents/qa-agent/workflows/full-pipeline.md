@@ -30,24 +30,31 @@ Before phase 1, the agent runs requirement resolution (see
    - Validation: file exists, parses as JSON, has `cases` array,
      each case has `id`, `feature`, `scenario`, `steps[]`, `expectedResult`.
 
-3. **test-automation-generator**
+3. **test-case-reviewer**
+   - Input: test-cases artifact + requirement artifact
+   - Output: `artifacts/test-case-reviews/<feature>-review.md`
+   - Validation: file exists, verdict is PASS | PASS WITH WARNINGS | FAIL.
+
+4. **test-automation-generator**
    - Input: test-cases artifact
+   - Precondition: the test-case-reviewer verdict must be PASS or
+     PASS WITH WARNINGS.
    - Output: `artifacts/automation/<feature>/<test-id>.spec.ts`
    - Validation: file exists, imports from `automation/pages/` or
      `automation/fixtures/`, contains at least one `test()` block.
 
-4. **test-automation-reviewer**
+5. **test-automation-reviewer**
    - Input: generated spec + selector cheatsheet
    - Output: `artifacts/automation-reviews/<feature>-review.md`
    - Validation: file exists, verdict is PASS | PASS WITH WARNINGS | FAIL.
 
-5. **test-automation-execution**
+6. **test-automation-execution**
    - Input: review verdict must be PASS or PASS WITH WARNINGS
    - Output: HTML report under `reports/html-report/`,
      JSON summary under `reports/last-run.json`
    - Validation: report file exists.
 
-6. **bug-reporting** (conditional)
+7. **bug-reporting** (conditional)
    - Trigger: any test failed in the previous step
    - Output: `artifacts/bug-reports/BUG-<id>.md`
    - Validation: file exists, has `## Steps to Reproduce`,

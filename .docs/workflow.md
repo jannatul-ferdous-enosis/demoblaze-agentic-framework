@@ -24,6 +24,7 @@ flowchart TB
     subgraph Skills["Skills (.agents/skills/&lt;name&gt;/SKILL.md) — loaded on demand"]
         S1["requirement-analysis"]
         S2["test-case-writing"]
+        S2b["test-case-reviewer"]
         S3["test-case-execution"]
         S4["test-automation-generator"]
         S5["test-automation-reviewer"]
@@ -34,6 +35,7 @@ flowchart TB
     subgraph Artifacts["Artifacts (artifacts/**) — contract between skills"]
         A1["requirements/&lt;feature&gt;.md"]
         A2["test-cases/&lt;feature&gt;.json"]
+        A2b["test-case-reviews/&lt;feature&gt;-review.md"]
         A3["automation/tests/&lt;feature&gt;/&lt;test-id&gt;.spec.ts"]
         A4["automation-reviews/&lt;feature&gt;-review.md"]
         A5["reports/last-run.json"]
@@ -127,11 +129,12 @@ flowchart TD
     Q3 -->|Yes, multi-skill| W4[Workflow: full-pipeline]
 
     W4a -.->|e.g. "Analyze login"| S1
-    W1 -.->|e.g. "review this test"| S5
+    W1 -.->|e.g. "review this test"| S2b
+    W1 -.->|e.g. "review this script"| S5
     W1 -.->|e.g. "log a bug"| S7
     W2 -.->|e.g. "run smoke tests"| S6
     W3 -.->|e.g. "design tests for X"| S2
-    W4 -.->|e.g. "analyze, write,<br/>automate, run, report"| S1 & S2 & S4 & S5 & S6 & S7
+    W4 -.->|e.g. "analyze, write,<br/>automate, run, report"| S1 & S2 & S2b & S4 & S5 & S6 & S7
 ```
 
 ---
@@ -145,22 +148,22 @@ flowchart LR
     end
 
     subgraph design-only
-        B0[test-case-writing]
+        B0[test-case-writing] --> B1[test-case-reviewer]
     end
 
     subgraph automate-and-execute
-        C1[test-automation-generator] --> C2[test-automation-reviewer] --> C3[test-automation-execution] --> C4{any failures?}
+        C0[test-case-reviewer] --> C1[test-automation-generator] --> C2[test-automation-reviewer] --> C3[test-automation-execution] --> C4{any failures?}
         C4 -->|yes| C5[bug-reporting]
         C4 -->|no| C6([done])
     end
 
     subgraph review-and-report
-        D1[test-automation-reviewer]
+        D1[test-case-reviewer / test-automation-reviewer]
         D2[bug-reporting]
     end
 
     subgraph full-pipeline
-        E1[requirement-analysis] --> E2[test-case-writing] --> E3[test-automation-generator] --> E4[test-automation-reviewer] --> E5[test-automation-execution] --> E6{any failures?}
+        E1[requirement-analysis] --> E2[test-case-writing] --> E2b[test-case-reviewer] --> E3[test-automation-generator] --> E4[test-automation-reviewer] --> E5[test-automation-execution] --> E6{any failures?}
         E6 -->|yes| E7[bug-reporting]
         E6 -->|no| E8([done])
     end
@@ -182,7 +185,11 @@ flowchart TB
     TCW -->|"writes"| A2[("artifacts/test-cases/<br/>login.json")]
     A2 -->|validates| V2{cases[] valid?}
     V2 -->|no| H1
-    V2 -->|yes| TAG[test-automation-generator]
+    V2 -->|yes| TCR[test-case-reviewer]
+    TCR -->|"writes"| A2b[("artifacts/test-case-reviews/<br/>login-review.md")]
+    A2b -->|validates| V2b{verdict?}
+    V2b -->|FAIL| H1
+    V2b -->|PASS / PASS WITH WARNINGS| TAG[test-automation-generator]
     TAG -->|"writes"| A3[("automation/tests/auth/<br/>login.spec.ts")]
     A3 -->|validates| V3{imports baseFixture +<br/>no waitForTimeout?}
     V3 -->|no| H1
@@ -237,6 +244,7 @@ graph LR
     subgraph Artifacts["artifacts/ (skill-produced)"]
         O1[requirements/login.md]
         O2[test-cases/login.json]
+        O2b[test-case-reviews/login-review.md]
         O3[automation/tests/auth/login.spec.ts]
         O4[automation-reviews/login-review.md]
         O5[reports/last-run.json]
@@ -245,7 +253,8 @@ graph LR
 
     I1 -->|requirement-analysis| O1
     O1 -->|test-case-writing| O2
-    O2 -->|test-automation-generator| O3
+    O2 -->|test-case-reviewer| O2b
+    O2b -->|test-automation-generator| O3
     O3 -->|test-automation-reviewer| O4
     O4 -->|test-automation-execution| O5
     O5 -->|if failures: bug-reporting| O6
@@ -253,7 +262,7 @@ graph LR
     classDef input fill:#fef3c7,stroke:#b45309
     classDef artifact fill:#dbeafe,stroke:#1d4ed8
     class I1 input
-    class O1,O2,O3,O4,O5,O6 artifact
+    class O1,O2,O2b,O3,O4,O5,O6 artifact
 ```
 
 ---
@@ -262,7 +271,15 @@ graph LR
 
 ```mermaid
 stateDiagram-v2
-    [*] --> SpecGenerated
+    [*] --> CasesWritten
+    CasesWritten --> CaseReviewing: test-case-reviewer
+    CaseReviewing --> CasePASS: no findings / INFO only
+    CaseReviewing --> CasePASSwithWARN: only MINOR findings
+    CaseReviewing --> CaseFAIL: ≥1 BLOCKER or ≥2 MAJOR
+    CasePASS --> SpecGenerated: test-automation-generator
+    CasePASSwithWARN --> SpecGenerated
+    CaseFAIL --> CaseHalted: revise test cases and re-review
+
     SpecGenerated --> Reviewing: test-automation-reviewer
     Reviewing --> PASS: no findings / INFO only
     Reviewing --> PASSwithWARN: only MINOR findings
@@ -279,6 +296,7 @@ stateDiagram-v2
     SomeFailed --> FilingBug: bug-reporting
     FilingBug --> [*]
     Halted --> [*]
+    CaseHalted --> [*]
 ```
 
 ---
@@ -297,6 +315,7 @@ flowchart TB
     subgraph L2["Layer 2 — Domain knowledge<br/>.agents/skills/"]
         L2a[requirement-analysis]
         L2b[test-case-writing]
+        L2b2[test-case-reviewer]
         L2c[test-case-execution]
         L2d[test-automation-generator]
         L2e[test-automation-reviewer]
@@ -307,6 +326,7 @@ flowchart TB
     subgraph L3["Layer 3 — Artifacts<br/>artifacts/"]
         L3a[requirements/*.md]
         L3b[test-cases/*.json]
+        L3b2[test-case-reviews/*.md]
         L3c[automation/*.spec.ts]
         L3d[automation-reviews/*.md]
         L3e[bug-reports/*.md]

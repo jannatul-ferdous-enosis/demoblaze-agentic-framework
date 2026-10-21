@@ -54,15 +54,17 @@ full pipeline.
        ▼
 ┌──────────────────────────────────────────────────────────────────────────┐
 │  SKILLS  (.agents/skills/*/SKILL.md) — pure markdown contracts           │
-│   requirement-analysis → test-case-writing → test-automation-generator →  │
-│   test-automation-reviewer → test-automation-execution → bug-reporting    │
+│   requirement-analysis → test-case-writing → test-case-reviewer →         │
+│   test-automation-generator → test-automation-reviewer →                  │
+│   test-automation-execution → bug-reporting                               │
 └──────┬───────────────────────────────────────────────────────────────────┘
        │  emits / consumes
        ▼
 ┌──────────────────────────────────────────────────────────────────────────┐
 │  ARTIFACTS  (artifacts/**)                                                │
-│   requirements/*.md | test-cases/*.json | test-executions/*.json |       │
-│   automation-reviews/*.md | bug-reports/*.md | execution-report.json     │
+│   requirements/*.md | test-cases/*.json | test-case-reviews/*.md |       │
+│   test-executions/*.json | automation-reviews/*.md |                      │
+│   bug-reports/*.md | execution-report.json                                │
 └──────┬───────────────────────────────────────────────────────────────────┘
        │  consumed by tools
        ▼
@@ -136,6 +138,7 @@ demoblaze-qa-agent/
 │   └── skills/                           # one folder per skill
 │       ├── requirement-analysis/SKILL.md
 │       ├── test-case-writing/SKILL.md
+│       ├── test-case-reviewer/SKILL.md
 │       ├── test-case-execution/SKILL.md
 │       ├── test-automation-generator/SKILL.md
 │       ├── test-automation-reviewer/SKILL.md
@@ -178,6 +181,7 @@ demoblaze-qa-agent/
 │   │   └── login.md                      # produced by requirement-analysis
 │   ├── test-cases/
 │   │   └── login.json                    # produced by test-case-writing
+│   ├── test-case-reviews/                # produced by test-case-reviewer
 │   ├── test-executions/                  # produced by test-case-execution
 │   ├── automation-reviews/               # produced by test-automation-reviewer
 │   └── bug-reports/                      # produced by bug-reporting
@@ -216,10 +220,11 @@ Examples of routing:
 | User says                                                        | Workflow               | Skills                                                                                                                                                  |
 | ---------------------------------------------------------------- | ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | "Analyze the login requirement"                                  | `analyze-only`         | `requirement-analysis`                                                                                                                                  |
-| "Write test cases for login"                                     | `design-only`          | `test-case-writing`                                                                                                                                     |
+| "Write test cases for login"                                     | `design-only`          | `test-case-writing` → `test-case-reviewer`                                                                                                             |
+| "Review the login test cases"                                    | `review-and-report`    | `test-case-reviewer`                                                                                                                                    |
 | "Run the login automation"                                       | `automate-and-execute` | `test-automation-execution`                                                                                                                             |
 | "Review this Playwright script"                                  | `review-and-report`    | `test-automation-reviewer`                                                                                                                              |
-| "Analyze login, write tests, automate, run, and report failures" | `full-pipeline`        | `requirement-analysis` → `test-case-writing` → `test-automation-generator` → `test-automation-reviewer` → `test-automation-execution` → `bug-reporting` |
+| "Analyze login, write tests, automate, run, and report failures" | `full-pipeline`        | `requirement-analysis` → `test-case-writing` → `test-case-reviewer` → `test-automation-generator` → `test-automation-reviewer` → `test-automation-execution` → `bug-reporting` |
 
 The deterministic host `scripts/run-agent.ts` is a CLI that demonstrates
 this routing in action.
@@ -258,6 +263,9 @@ requirements/login.md
 test-cases/login.json
    (test-case-writing)
         ↓
+test-case-reviews/login-review.md
+   (test-case-reviewer)  ── verdict PASS|PASS WITH WARNINGS|FAIL
+        ↓ (PASS only)
 automation/tests/auth/login.spec.ts
    (test-automation-generator)
         ↓
@@ -397,6 +405,7 @@ npm run agent:pipeline -- "Analyze login, write test cases, automate and run the
 npm run agent:skill -- requirement-analysis login
 npm run agent:skill -- requirement-analysis login --source=inputs/requirements/login.md
 npm run agent:skill -- test-case-writing login
+npm run agent:skill -- test-case-reviewer login
 npm run agent:skill -- test-automation-execution smoke
 ```
 
@@ -493,7 +502,7 @@ That host can be in any language — the contracts are markdown.
 ## 15. Evolving into a Multi-Agent architecture
 
 The current implementation is intentionally a single decision-maker
-(the QA Agent) over seven skills. When the framework needs to scale:
+(the QA Agent) over eight skills. When the framework needs to scale:
 
 1. **Add an Orchestrator Agent** at
    `.agents/agents/orchestrator/agent.md` that holds the routing logic
@@ -502,6 +511,7 @@ The current implementation is intentionally a single decision-maker
 2. **Promote each skill cluster to a sub-agent**:
    - Requirement Agent → owns `requirement-analysis`
    - Test Design Agent → owns `test-case-writing` + `test-case-execution`
+   - Test Design Review Agent → owns `test-case-reviewer`
    - Automation Agent → owns `test-automation-generator`
    - Review Agent → owns `test-automation-reviewer`
    - Execution Agent → owns `test-automation-execution`

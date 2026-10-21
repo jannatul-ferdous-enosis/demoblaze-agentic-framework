@@ -26,4 +26,11 @@ exists in `inputs/requirements/<feature>.md`, the agent MAY chain
      user.
    - Output: `artifacts/test-cases/<feature>.json`
 
-Halt after the test-cases artifact is validated.
+2. **test-case-reviewer**
+   - Input: test-cases artifact + requirement artifact
+   - Output: `artifacts/test-case-reviews/<feature>-review.md`
+   - Validation: verdict is PASS | PASS WITH WARNINGS | FAIL.
+
+Halt after the review artifact is validated. Report the verdict and any
+`MAJOR` / `BLOCKER` findings to the user so they can decide whether to
+proceed to automation.

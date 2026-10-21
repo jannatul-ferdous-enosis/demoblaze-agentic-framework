@@ -41,6 +41,7 @@ I/O) are provided by the host harness, not embedded here.
 | --------------------------- | -------------------------------------------------- |
 | `requirement-analysis`      | User asks to analyze a feature/requirement.        |
 | `test-case-writing`         | User asks to write test cases.                     |
+| `test-case-reviewer`        | User asks to review test cases before automation. |
 | `test-case-execution`       | User asks to manually reproduce a test case.       |
 | `test-automation-generator` | User asks to automate a test case into Playwright. |
 | `test-automation-reviewer`  | User asks to review generated automation code.     |
@@ -94,12 +95,13 @@ algorithm.
 | ----------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | "analyze the login requirement"                                   | `requirement-analysis`                                                                                                                                                |
 | "create test cases for login"                                     | `test-case-writing` (after a requirement artifact)                                                                                                                    |
+| "review the login test cases"                                     | `test-case-reviewer`                                                                                                                                                  |
 | "execute TC-AUTH-001"                                             | `test-case-execution`                                                                                                                                                 |
 | "automate TC-AUTH-001"                                            | `test-automation-generator`                                                                                                                                           |
 | "review this Playwright script"                                   | `test-automation-reviewer`                                                                                                                                            |
 | "run the login automation" / "execute the smoke tests"            | `test-automation-execution`                                                                                                                                           |
 | "create a bug from this failure"                                  | `bug-reporting`                                                                                                                                                       |
-| "analyze login, write cases, automate, run, report"               | `requirement-analysis` → `test-case-writing` → `test-automation-generator` → `test-automation-reviewer` → `test-automation-execution` → `bug-reporting` (if failures) |
+| "analyze login, write cases, automate, run, report"               | `requirement-analysis` → `test-case-writing` → `test-case-reviewer` → `test-automation-generator` → `test-automation-reviewer` → `test-automation-execution` → `bug-reporting` (if failures) |
 | `process "inputs/requirements/login.md"` (explicit path override) | `requirement-analysis` with `requirementSourcePath` = the cited path                                                                                                  |
 
 Plain requests like `"Analyze login"` do NOT require a path — the
@@ -144,6 +146,7 @@ deterministic keyword router that maps requests → workflows lives at
 ```
 artifacts/requirements/<feature>.md
 artifacts/test-cases/<feature>.json
+artifacts/test-case-reviews/<feature>-review.md
 artifacts/test-executions/<execution-id>.json
 artifacts/automation/<feature>/<test-id>.spec.ts
 artifacts/automation-reviews/<feature>-review.md

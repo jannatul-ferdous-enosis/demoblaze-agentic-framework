@@ -111,4 +111,5 @@ A Markdown report MAY also be written to
 ## Dependencies
 
 - Often preceded by `requirement-analysis`.
+- Reviewed by `test-case-reviewer` before consumption.
 - Consumed by `test-automation-generator` and `test-case-execution`.

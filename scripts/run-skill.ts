@@ -6,9 +6,9 @@
  *   tsx scripts/run-skill.ts <skill> <input-file-or-feature> [--source=<path>]
  *
  * Skills available (loaded from .agents/skills/<skill>/SKILL.md):
- *   requirement-analysis, test-case-writing, test-case-execution,
- *   test-automation-generator, test-automation-reviewer,
- *   test-automation-execution, bug-reporting
+ *   requirement-analysis, test-case-writing, test-case-reviewer,
+ *   test-case-execution, test-automation-generator,
+ *   test-automation-reviewer, test-automation-execution, bug-reporting
  *
  * Note: skills that require LLM reasoning (analysis, writing, generation,
  * review, bug reporting) are best executed by the QA Agent host that has
@@ -39,6 +39,7 @@ function printUsage(): void {
 Skills (loaded from .agents/skills/<skill>/SKILL.md):
   requirement-analysis        <feature-slug>     [--source=inputs/requirements/<slug>.md]
   test-case-writing           <feature-slug>
+  test-case-reviewer          <feature-slug>
   test-case-execution         <test-case-id>
   test-automation-generator   <test-case-id>
   test-automation-reviewer    <test-case-id>
@@ -169,6 +170,7 @@ ${sourceProvenance(sourcePath)}`;
 
   case 'test-automation-generator':
   case 'test-automation-reviewer':
+  case 'test-case-reviewer':
   case 'test-case-execution':
   case 'bug-reporting': {
     console.info(

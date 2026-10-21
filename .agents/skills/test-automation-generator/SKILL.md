@@ -13,6 +13,7 @@ Generate a Playwright TypeScript spec file from an approved test case.
 
 - User asks to "automate TC-LOGIN-001", "write the automation for this
   test", "convert manual test into code".
+- After `test-case-reviewer` has returned PASS or PASS WITH WARNINGS.
 
 ## Inputs
 
@@ -111,5 +112,6 @@ test.describe('Login — LOGIN-001', () => {
 ## Dependencies
 
 - The test case artifact (produced by `test-case-writing`).
+- The review verdict from `test-case-reviewer` (must not be FAIL).
 - The Playwright framework + page objects + fixtures.
 - Consumed by `test-automation-reviewer` and `test-automation-execution`.
